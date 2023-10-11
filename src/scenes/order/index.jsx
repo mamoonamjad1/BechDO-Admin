@@ -47,7 +47,11 @@ const Order  =() =>{
                         align: "left",
                         valueGetter: (params) => {
                           const products = params.row.products;
+                          if(products){
                           return `${products.name}`;
+                          }else{
+                            return "No Product"
+                          }
                         },
                       },
                       {
@@ -90,7 +94,11 @@ const Order  =() =>{
                         align: "left",
                         valueGetter: (params) => {
                           const products = params.row.products;
+                          if(products){
                           return `${products.currentPrice.$numberDecimal.toString()}`;
+                          }else{
+                            return "No Price"
+                          }
                         },
                       },                      
                     {
@@ -101,7 +109,11 @@ const Order  =() =>{
                         valueGetter: (params) => {
                             // Assuming that the seller object has a "firstName" and "lastName" field
                             const buyer = params.row.buyer;
+                            if(buyer){
                             return `${buyer.firstName} ${buyer.lastName}`;
+                            }else{
+                              return "No Buyer"
+                            }
                           },
                     },
                     {
@@ -169,6 +181,7 @@ const Order  =() =>{
                 />
             </Box>
         </Box>
+        
     )
 }
 

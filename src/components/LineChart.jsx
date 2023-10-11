@@ -8,12 +8,13 @@ const LineChart = () => {
   useEffect(() => {
     // Fetch data from your API endpoint
     axios
-      .get("http://localhost:4000/admin/products/details/line-chart")
+      .get("http://localhost:4000/admin/products/chart")
       .then((response) => {
         console.log("Line chart data:", response.data)
         const data = response.data.map((item) => ({
-          x: new Date(item.createdAt).toISOString(), // Format the date as ISO string
-          y: parseFloat(item.product.bidAmount), // Ensure bidAmount is parsed as a float
+          x: item.createdAt, // Assuming that `item.createdAt` is already a valid date format
+           // Format the date as ISO string
+          y: parseFloat(item.category.name), // Ensure bidAmount is parsed as a float
         }));
 
         setLineChartData([

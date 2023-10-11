@@ -12,10 +12,101 @@ import GeographyChart from "../../components/GeographyChart";
 import BarChart from "../../components/BarChart";
 import StatBox from "../../components/StatBox";
 import ProgressCircle from "../../components/ProgressCircle";
-
+import { useEffect,useState } from "react";
+import axios from "axios";
+import DeliveryDiningIcon from '@mui/icons-material/DeliveryDining';
+import GavelIcon from '@mui/icons-material/Gavel';
+import PieChart from "../../components/PieChart";
+import LiveTvIcon from '@mui/icons-material/LiveTv';
 const Dashboard = () => {
   const theme = useTheme();
   const colors = tokens(theme.palette.mode);
+  const [sellers, setSellers] = useState([]);
+  const [buyers, setBuyer] = useState([]);
+  const [orders, setOrders] = useState([]);
+  const [invoice, setInvoice] = useState([]);
+  const [totalCost, setTotalCost] = useState(0);
+
+  const [products, setProducts] = useState([]);
+  const [productsLive, setProductsLive] = useState([]);
+  useEffect(() => {
+    axios
+      .get("http://localhost:4000/admin/products/get-live")
+      .then((res) => {
+        console.log("Products", res.data);
+        setProductsLive(res.data);
+      })
+      .catch((err) => {
+        console.log(err);
+      });
+  }, []);
+  useEffect(() => {
+    axios
+      .get("http://localhost:4000/admin/products/get")
+      .then((res) => {
+        console.log("Products", res.data);
+        setProducts(res.data);
+      })
+      .catch((err) => {
+        console.log(err);
+      });
+  }, [products]);
+  useEffect(() => {
+    axios
+      .get("http://localhost:4000/admin/products/total/earnings")
+      .then((res) => {
+        console.log("Invoice: ", res.data);
+
+        // Flatten the response object into an array
+        const normalizedOrders = Object.keys(res.data).map((sellerId) => ({
+          id: sellerId,
+          ...res.data[sellerId],
+        }));
+        setTotalCost(
+          normalizedOrders.reduce((total, order) => total + (order.totalEarnings/100*1 || 0), 0)
+        );
+        setInvoice(normalizedOrders);
+      })
+      .catch((err) => {
+        console.log(err);
+      });
+  }, []);
+
+  useEffect(()=>{
+      axios.get("http://localhost:4000/admin/orders/get")
+      .then((res)=>{
+          console.log("Orders",res.data)
+          setOrders(res.data)
+      }).catch((err)=>{
+          console.log(err)
+      })
+  })
+  const [bids, setBids] = useState([]);
+
+  useEffect(()=>{
+      axios.get("http://localhost:4000/admin/products/get/bids")
+      .then((res)=>{
+          setBids(res.data)
+      }).catch((err)=>{
+          console.log(err)
+      })
+  })
+  useEffect(() => {
+    axios.get("http://localhost:4000/admin/users/get/sellers")
+    .then((res) => {    
+      setSellers(res.data);
+    });
+  }
+  , []);
+  useEffect(() => {
+    axios.get("http://localhost:4000/admin/users/get/buyer")
+    .then((res) => {    
+      setBuyer(res.data);
+    });
+  }
+  , []);
+
+  
 
   return (
     <Box m="20px">
@@ -23,7 +114,7 @@ const Dashboard = () => {
       <Box display="flex" justifyContent="space-between" alignItems="center">
         <Header title="DASHBOARD" subtitle="Welcome to your dashboard" />
 
-        <Box>
+        {/* <Box>
           <Button
             sx={{
               backgroundColor: colors.blueAccent[700],
@@ -36,7 +127,7 @@ const Dashboard = () => {
             <DownloadOutlinedIcon sx={{ mr: "10px" }} />
             Download Reports
           </Button>
-        </Box>
+        </Box> */}
       </Box>
 
       <Box
@@ -46,7 +137,7 @@ const Dashboard = () => {
         gap="20px"
       >
 
-        <Box
+<Box
           gridColumn="span 3"
           backgroundColor={colors.primary[400]}
           display="flex"
@@ -54,12 +145,10 @@ const Dashboard = () => {
           justifyContent="center"
         >
           <StatBox
-            title="12,361"
-            subtitle="Emails Sent"
-            progress="0.75"
-            increase="+14%"
+            title={productsLive.length}
+            subtitle="Live Auctions"
             icon={
-              <EmailIcon
+              <LiveTvIcon
                 sx={{ color: colors.greenAccent[600], fontSize: "26px" }}
               />
             }
@@ -73,12 +162,10 @@ const Dashboard = () => {
           justifyContent="center"
         >
           <StatBox
-            title="431,225"
-            subtitle="Sales Obtained"
-            progress="0.50"
-            increase="+21%"
+            title={orders.length}
+            subtitle="Orders Recieved"
             icon={
-              <PointOfSaleIcon
+              <DeliveryDiningIcon
                 sx={{ color: colors.greenAccent[600], fontSize: "26px" }}
               />
             }
@@ -92,10 +179,8 @@ const Dashboard = () => {
           justifyContent="center"
         >
           <StatBox
-            title="32,441"
-            subtitle="New Clients"
-            progress="0.30"
-            increase="+5%"
+            title={sellers.length}
+            subtitle="Sellers"
             icon={
               <PersonAddIcon
                 sx={{ color: colors.greenAccent[600], fontSize: "26px" }}
@@ -111,10 +196,8 @@ const Dashboard = () => {
           justifyContent="center"
         >
           <StatBox
-            title="1,325,134"
-            subtitle="Traffic Received"
-            progress="0.80"
-            increase="+43%"
+            title={buyers.length}
+            subtitle="Clients"
             icon={
               <TrafficIcon
                 sx={{ color: colors.greenAccent[600], fontSize: "26px" }}
@@ -122,6 +205,7 @@ const Dashboard = () => {
             }
           />
         </Box>
+
 
         <Box
           gridColumn="span 8"
@@ -148,7 +232,7 @@ const Dashboard = () => {
                 fontWeight="bold"
                 color={colors.greenAccent[500]}
               >
-                $59,342.32
+                ${totalCost}
               </Typography>
             </Box>
             <Box>
@@ -159,9 +243,9 @@ const Dashboard = () => {
               </IconButton>
             </Box>
           </Box>
-          <Box height="250px" m="-20px 0 0 0">
+          {/* <Box height="250px" m="-20px 0 0 0">
             <LineChart isDashboard={true} />
-          </Box>
+          </Box> */}
         </Box>
         <Box
           gridColumn="span 4"
@@ -178,10 +262,10 @@ const Dashboard = () => {
             p="15px"
           >
             <Typography color={colors.grey[100]} variant="h5" fontWeight="600">
-              Recent Transactions
+              Seller Invoices
             </Typography>
           </Box>
-          {mockTransactions.map((transaction, i) => (
+          {invoice.map((transaction, i) => (
             <Box
               key={`${transaction.txId}-${i}`}
               display="flex"
@@ -191,15 +275,8 @@ const Dashboard = () => {
               p="15px"
             >
               <Box>
-                <Typography
-                  color={colors.greenAccent[500]}
-                  variant="h5"
-                  fontWeight="600"
-                >
-                  {transaction.txId}
-                </Typography>
                 <Typography color={colors.grey[100]}>
-                  {transaction.user}
+                  {transaction.sellerDetails.firstName} {" "} {transaction.sellerDetails.lastName}
                 </Typography>
               </Box>
               <Box color={colors.grey[100]}>{transaction.date}</Box>
@@ -208,70 +285,10 @@ const Dashboard = () => {
                 p="5px 10px"
                 borderRadius="4px"
               >
-                ${transaction.cost}
+                ${transaction.totalEarnings}
               </Box>
             </Box>
           ))}
-        </Box>
-
-        <Box
-          gridColumn="span 4"
-          gridRow="span 2"
-          backgroundColor={colors.primary[400]}
-          p="30px"
-        >
-          <Typography variant="h5" fontWeight="600">
-            Campaign
-          </Typography>
-          <Box
-            display="flex"
-            flexDirection="column"
-            alignItems="center"
-            mt="25px"
-          >
-            <ProgressCircle size="125" />
-            <Typography
-              variant="h5"
-              color={colors.greenAccent[500]}
-              sx={{ mt: "15px" }}
-            >
-              $48,352 revenue generated
-            </Typography>
-            <Typography>Includes extra misc expenditures and costs</Typography>
-          </Box>
-        </Box>
-        <Box
-          gridColumn="span 4"
-          gridRow="span 2"
-          backgroundColor={colors.primary[400]}
-        >
-          <Typography
-            variant="h5"
-            fontWeight="600"
-            sx={{ padding: "30px 30px 0 30px" }}
-          >
-            Sales Quantity
-          </Typography>
-          <Box height="250px" mt="-20px">
-            <BarChart isDashboard={true} />
-          </Box>
-        </Box>
-        <Box
-          gridColumn="span 4"
-          gridRow="span 2"
-          backgroundColor={colors.primary[400]}
-          padding="30px"
-        >
-          <Typography
-            variant="h5"
-            fontWeight="600"
-            sx={{ marginBottom: "15px" }}
-          >
-            Geography Based Traffic
-          </Typography>
-          <Box height="200px">
-            <GeographyChart isDashboard={true} />
-          </Box>
         </Box>
       </Box>
     </Box>

@@ -11,7 +11,11 @@ const BarChart = () => {
       .get("http://localhost:4000/admin/orders/get")
       .then((response) => {
         // Process the data as needed
-        const data = response.data;
+        console.log("Bar chart data:", response.data);
+        const data = response.data.map((item) => ({
+          product: item.products.name,
+          value: parseFloat(item.products.currentPrice.$numberDecimal.toString()),
+        }));
         setBarData(data);
       })
       .catch((error) => {
@@ -21,11 +25,14 @@ const BarChart = () => {
 
   return (
     <div style={{ height: "400px" }}>
+      <div style={{ fontSize: "18px", textAlign: "center", margin: "10px" }}>
+        Bar Chart: Product Prices
+      </div>
       <ResponsiveBar
         data={barData}
-        keys={["key1", "key2", "key3"]} // Replace with your data keys
-        indexBy="index" // Replace with your data index
-        margin={{ top: 50, right: 60, bottom: 50, left: 60 }}
+        keys={["value"]}
+        indexBy="product"
+        margin={{ top: 50, right: 60, bottom: 80, left: 60 }}
         padding={0.3}
         axisTop={null}
         axisRight={null}
@@ -33,13 +40,19 @@ const BarChart = () => {
           tickSize: 5,
           tickPadding: 5,
           tickRotation: 0,
+          legend: "Product Names",
+          legendPosition: "middle",
+          legendOffset: 45, // Adjust the offset as needed
         }}
         axisLeft={{
           tickSize: 5,
           tickPadding: 5,
           tickRotation: 0,
+          legend: "Price",
+          legendPosition: "middle",
+          legendOffset: -40, // Adjust the offset as needed
         }}
-        enableLabel={false}
+        enableLabel={true}
         labelSkipWidth={12}
         labelSkipHeight={12}
         labelTextColor={{ from: "color", modifiers: [["darker", 1.6]] }}

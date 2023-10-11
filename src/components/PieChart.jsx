@@ -15,7 +15,7 @@ const PieChart = () => {
       .get("http://localhost:4000/admin/products/chart")
       .then((res) => {
         // Process the data to fit the structure expected by ResponsivePie
-        console.log(res);
+        console.log("Chart",res);
         const processedData = res.data.map((order, index) => ({
           id: order.id, // Unique identifier for the data point
           label: order.category.name, // Display label for the pie chart

@@ -10,18 +10,26 @@ import {
   DialogActions,
   Typography,
   useTheme,
-  TextField
+  TextField,
+  Slide,
 } from "@mui/material";
 import { DataGrid, GridToolbar } from "@mui/x-data-grid";
 import { tokens } from "../../theme";
 import Header from "../../components/Header";
-import DeleteIcon from '@mui/icons-material/Delete';
+import DeleteIcon from "@mui/icons-material/Delete";
+import FileDownloadDoneIcon from "@mui/icons-material/FileDownloadDone";
+
+const Transition = React.forwardRef(function Transition(props, ref) {
+  return <Slide direction="up" ref={ref} {...props} />;
+});
 
 const Form = () => {
   const theme = useTheme();
   const colors = tokens(theme.palette.mode);
   const [categories, setCategories] = useState([]);
   const [open, setOpen] = useState(false);
+  const [images, setImages] = useState([]);
+  const [uploadedImageTitles, setUploadedImageTitles] = useState([]);
   const [formData, setFormData] = useState({
     name: "",
     description: "",
@@ -35,10 +43,23 @@ const Form = () => {
     });
   };
 
+  const handleImageChange = (event) => {
+    const fileList = event.target.files;
+    const fileTitles = Array.from(fileList).map((file) => file.name);
+    setImages([...images, ...fileList]);
+    setUploadedImageTitles([...uploadedImageTitles, ...fileTitles]);
+  };
+
   // Handle form submission
   const handleSubmit = () => {
+    const formDataToSubmit = new FormData();
+    formDataToSubmit.append("name", formData.name);
+    formDataToSubmit.append("description", formData.description);
+    images.forEach((image) => {
+      formDataToSubmit.append("image", image);
+    });
     axios
-      .post("http://localhost:4000/categories/add", formData) // Adjust the API endpoint
+      .post("http://localhost:4000/categories/add", formDataToSubmit)
       .then((res) => {
         console.log("Category added successfully");
         setOpen(false);
@@ -61,23 +82,26 @@ const Form = () => {
       });
   }, [categories]);
 
-  const handleUserClick = (userId) => {
-    console.log("Clicked user ID:", userId);
-    axios.delete(`http://localhost:4000/categories/delete/${userId}`)
-    .then((res) => {
-        console.log("User deleted successfully:", res);
-    }).catch((err) => {
-        console.error("Error deleting user:", err);
-    });     
-
+  const handleUserClick = (categoryId) => {
+    console.log("Clicked category ID:", categoryId);
+    axios
+      .delete(`http://localhost:4000/categories/delete/${categoryId}`)
+      .then((res) => {
+        console.log("Category deleted successfully:", res);
+        // Optionally, update the categories list after deleting a category
+      })
+      .catch((err) => {
+        console.error("Error deleting category:", err);
+      });
   };
 
   const handleClose = () => {
     setOpen(false);
-  }
+  };
+
   const columns = [
     {
-      field: "_id", // Use the id field as the unique identifier
+      field: "_id",
       headerName: "ID",
       flex: 1,
     },
@@ -87,9 +111,9 @@ const Form = () => {
       flex: 1.5,
       renderCell: (params) => (
         <img
-          src={params.value} // Assuming the "image" field contains the image URL
+          src={params.value}
           alt="Category"
-          style={{ width: "100px", height: "auto", padding:'2px'}}
+          style={{ width: "100px", height: "auto", padding: "2px" }}
         />
       ),
     },
@@ -107,24 +131,22 @@ const Form = () => {
       field: "action",
       headerName: "Action",
       flex: 1,
-      renderCell: ({ row: { _id } }) => {
-        return (
-          <Button
-            variant="contained"
-            color="error"
-            onClick={() => handleUserClick(_id)}
-            startIcon={<DeleteIcon />}
-          >
-            Delete User
-          </Button>
-        );
-      },
+      renderCell: ({ row: { _id } }) => (
+        <Button
+          variant="contained"
+          color="error"
+          onClick={() => handleUserClick(_id)}
+          startIcon={<DeleteIcon />}
+        >
+          Delete Category
+        </Button>
+      ),
     },
   ];
 
   return (
     <Box m="20px">
-      <Header title="Invoice" subtitle="List of Payable Amount To Seller" />
+      <Header title="Categories" subtitle="List of Categories" />
       <Box
         m="40px 0 0 0"
         height="75vh"
@@ -154,8 +176,16 @@ const Form = () => {
           },
         }}
       >
-        <Button onClick={()=>{setOpen(true)}} >
-          <Typography color={colors.grey[100]} sx={{ ml: "5px" }}>
+        <Button onClick={() => setOpen(true)}>
+          <Typography color={colors.grey[100]}         
+           sx={{
+              backgroundColor: colors.blueAccent[700],
+              color: colors.grey[100],
+              fontSize: "14px",
+              fontWeight: "bold",
+              padding: "10px 20px",
+              
+            }}>
             Add New Category
           </Typography>
         </Button>
@@ -167,7 +197,7 @@ const Form = () => {
         />
       </Box>
 
-      <Dialog open={open} onClose={handleClose}>
+      <Dialog open={open} onClose={handleClose} TransitionComponent={Transition}>
         <DialogTitle>Add A New Category</DialogTitle>
         <DialogContent>
           <DialogContentText>
@@ -193,26 +223,40 @@ const Form = () => {
           />
           <br />
           <input
-                type="file"
-                accept="image/*"
-                multiple
-                // onChange={handleImageChange}
-                style={{ display: "none" }}
-                id="upload-image-input"
-              />
-              <label htmlFor="upload-image-input">
-                <Button
-                  fullWidth
-                  variant="contained"
-                  sx={{
-                    backgroundColor: "orange",
-                    "&:hover": { backgroundColor: "#F4D160" },
-                  }}
-                  component="span"
+            type="file"
+            accept="image/*"
+            multiple
+            onChange={handleImageChange}
+            style={{ display: "none" }}
+            id="upload-image-input"
+          />
+          <label htmlFor="upload-image-input">
+            <Button
+              fullWidth
+              variant="contained"
+              sx={{
+                backgroundColor: "orange",
+                "&:hover": { backgroundColor: "#F4D160" },
+              }}
+              component="span"
+            >
+              Upload Image
+            </Button>
+          </label>
+          {uploadedImageTitles.length > 0 && (
+            <div>
+              {uploadedImageTitles.map((title, index) => (
+                <Typography
+                  key={index}
+                  variant="caption"
+                  sx={{ mt: 1 }}
+                  startIcon={<FileDownloadDoneIcon />}
                 >
-                  Upload Image
-                </Button>
-              </label>
+                  {title}
+                </Typography>
+              ))}
+            </div>
+          )}
         </DialogContent>
         <DialogActions>
           <Button
@@ -232,7 +276,6 @@ const Form = () => {
         </DialogActions>
       </Dialog>
     </Box>
-
   );
 };
 
