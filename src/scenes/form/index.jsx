@@ -1,159 +1,239 @@
-import { Box , Button , TextField } from "@mui/material";
-import {Formik} from "formik";
-import * as yup from "yup";
-import useMediaQuery from "@mui/material/useMediaQuery/useMediaQuery";
+import React, { useEffect, useState } from "react";
+import axios from "axios";
+import {
+  Box,
+  Button,
+  Dialog,
+  DialogContent,
+  DialogContentText,
+  DialogTitle,
+  DialogActions,
+  Typography,
+  useTheme,
+  TextField
+} from "@mui/material";
+import { DataGrid, GridToolbar } from "@mui/x-data-grid";
+import { tokens } from "../../theme";
 import Header from "../../components/Header";
-
-const initialValues = {
-    firstName: "",
-    lastName: "",
-    email: "",
-    contact: "",
-    address1: "",
-    address2: "",
-};
-
-const phoneRegExp = 
-/^((\+[1-9]{1,4}[ -]?)|(\([0-9]{2,3}\)[ -]?)|([0-9]{2,4})[ -]?)*?[0-9]{3,4}[ -]?[0-9]{3,4}$/;
-
-
-const userSchema = yup.object().shape({
-    firstName: yup.string().required("required"),
-    lastName: yup.string().required("required"),
-    email: yup.string().email("invalid email").required("required"),
-    contact: yup.string().matches(phoneRegExp, "Phone number is not valid")
-    .required("required"),
-    address1: yup.string().required("required"),
-    address2: yup.string().required("required"),
-});
+import DeleteIcon from '@mui/icons-material/Delete';
 
 const Form = () => {
+  const theme = useTheme();
+  const colors = tokens(theme.palette.mode);
+  const [categories, setCategories] = useState([]);
+  const [open, setOpen] = useState(false);
+  const [formData, setFormData] = useState({
+    name: "",
+    description: "",
+  });
 
-    const isNonMobile = useMediaQuery("(min-width:600px");
+  // Handle form input change
+  const handleInputChange = (e) => {
+    setFormData({
+      ...formData,
+      [e.target.name]: e.target.value,
+    });
+  };
 
-    const handleFormSubmit = (values) => {
-        console.log(values);
-    };
+  // Handle form submission
+  const handleSubmit = () => {
+    axios
+      .post("http://localhost:4000/categories/add", formData) // Adjust the API endpoint
+      .then((res) => {
+        console.log("Category added successfully");
+        setOpen(false);
+        // Optionally, update the categories list after adding a new category
+      })
+      .catch((err) => {
+        console.error("Error adding category: ", err);
+      });
+  };
 
-    return(
-    <Box m="20px"> 
+  useEffect(() => {
+    axios
+      .get("http://localhost:4000/categories/get")
+      .then((res) => {
+        console.log("Cat: ", res.data);
+        setCategories(res.data);
+      })
+      .catch((err) => {
+        console.log(err);
+      });
+  }, [categories]);
 
-        <Header title = "CREATE USER" subtitle= "Create a New User Profile" />
+  const handleUserClick = (userId) => {
+    console.log("Clicked user ID:", userId);
+    axios.delete(`http://localhost:4000/categories/delete/${userId}`)
+    .then((res) => {
+        console.log("User deleted successfully:", res);
+    }).catch((err) => {
+        console.error("Error deleting user:", err);
+    });     
 
-        <Formik
-          onSubmit={handleFormSubmit}
-          initialValues={initialValues}
-          validationSchema={userSchema}
-        >
-            {({ values , errors , touched , handleBlur , handleChange , handleSubmit }) =>(
-                <form onSubmit={handleSubmit}>
-                    <Box 
-                    display="grid" 
-                    gap="30px" 
-                    gridTemplateColumns="repeat(4, minmax(0, 1fr))"
-                    sx = {{
-                        "& > div": {gridColumn : isNonMobile ? undefined : "span 4"},
-                    }}
-                    >
+  };
 
-                    <TextField 
-                        fullWidth
-                        variant="filled"
-                        type="text"
-                        label="FirstName"
-                        onBlur={handleBlur}
-                        onChange={handleChange}
-                        value={values.firstName}
-                        name="firstName"
-                        error={!!touched.firstName && !!errors.firstName}
-                        helperText ={touched.firstName && errors.firstName}
-                        sx = {{ gridColumn: "span 2"}}
-                    />
+  const handleClose = () => {
+    setOpen(false);
+  }
+  const columns = [
+    {
+      field: "_id", // Use the id field as the unique identifier
+      headerName: "ID",
+      flex: 1,
+    },
+    {
+      field: "image",
+      headerName: "IMAGE",
+      flex: 1.5,
+      renderCell: (params) => (
+        <img
+          src={params.value} // Assuming the "image" field contains the image URL
+          alt="Category"
+          style={{ width: "100px", height: "auto", padding:'2px'}}
+        />
+      ),
+    },
+    {
+      field: "name",
+      headerName: "NAME",
+      flex: 2,
+    },
+    {
+      field: "description",
+      headerName: "DESCRIPTION",
+      flex: 1,
+    },
+    {
+      field: "action",
+      headerName: "Action",
+      flex: 1,
+      renderCell: ({ row: { _id } }) => {
+        return (
+          <Button
+            variant="contained"
+            color="error"
+            onClick={() => handleUserClick(_id)}
+            startIcon={<DeleteIcon />}
+          >
+            Delete User
+          </Button>
+        );
+      },
+    },
+  ];
 
-                    <TextField 
-                        fullWidth
-                        variant="filled"
-                        type="text"
-                        label="Last Name"
-                        onBlur={handleBlur}
-                        onChange={handleChange}
-                        value={values.lastName}
-                        name="lastName"
-                        error={!!touched.lastName && !!errors.lastName}
-                        helperText ={touched.lastName && errors.lastName}
-                        sx = {{ gridColumn: "span 2"}}
-                    />
+  return (
+    <Box m="20px">
+      <Header title="Invoice" subtitle="List of Payable Amount To Seller" />
+      <Box
+        m="40px 0 0 0"
+        height="75vh"
+        sx={{
+          "& .MuiDataGrid-root": {
+            border: "none",
+          },
+          "& .MuiDataGrid-cell": {
+            borderBottom: "none",
+          },
+          "& .name-column--cell": {
+            color: colors.greenAccent[300],
+          },
+          "& .MuiDataGrid-columnHeaders": {
+            backgroundColor: colors.blueAccent[700],
+            borderBottom: "none",
+          },
+          "& .MuiDataGrid-virtualScroller": {
+            backgroundColor: colors.primary[400],
+          },
+          "& .MuiDataGrid-footerContainer": {
+            borderTop: "none",
+            backgroundColor: colors.blueAccent[700],
+          },
+          "& .MuiDataGrid-toolbarContainer .MuiButton-text": {
+            color: `${colors.grey[100]} !important`,
+          },
+        }}
+      >
+        <Button onClick={()=>{setOpen(true)}} >
+          <Typography color={colors.grey[100]} sx={{ ml: "5px" }}>
+            Add New Category
+          </Typography>
+        </Button>
+        <DataGrid
+          rows={categories}
+          columns={columns}
+          components={{ Toolbar: GridToolbar }}
+          getRowId={(row) => row._id}
+        />
+      </Box>
 
-                    <TextField 
-                        fullWidth
-                        variant="filled"
-                        type="text"
-                        label="Email"
-                        onBlur={handleBlur}
-                        onChange={handleChange}
-                        value={values.email}
-                        name="email"
-                        error={!!touched.email && !!errors.email}
-                        helperText ={touched.email && errors.email}
-                        sx = {{ gridColumn: "span 4"}}
-                    />
+      <Dialog open={open} onClose={handleClose}>
+        <DialogTitle>Add A New Category</DialogTitle>
+        <DialogContent>
+          <DialogContentText>
+            Please fill the form below to add a new category.
+          </DialogContentText>
 
-                    <TextField 
-                        fullWidth
-                        variant="filled"
-                        type="text"
-                        label="Contact Number"
-                        onBlur={handleBlur}
-                        onChange={handleChange}
-                        value={values.contact}
-                        name="contact"
-                        error={!!touched.contact && !!errors.contact}
-                        helperText ={touched.contact && errors.contact}
-                        sx = {{ gridColumn: "span 4"}}
-                    />
-
-                    <TextField 
-                        fullWidth
-                        variant="filled"
-                        type="text"
-                        label="Address1"
-                        onBlur={handleBlur}
-                        onChange={handleChange}
-                        value={values.address1}
-                        name="address1"
-                        error={!!touched.address1 && !!errors.address1}
-                        helperText ={touched.address1 && errors.address1}
-                        sx = {{ gridColumn: "span 4"}}
-                    />
-
-                    <TextField 
-                        fullWidth
-                        variant="filled"
-                        type="text"
-                        label="Address2"
-                        onBlur={handleBlur}
-                        onChange={handleChange}
-                        value={values.address2}
-                        name="address2"
-                        error={!!touched.address2 && !!errors.address2}
-                        helperText ={touched.address2 && errors.address2}
-                        sx = {{ gridColumn: "span 4"}}
-                    />
-
-                    </Box>
-
-                    <Box display = "flex" justifyContent="end" mt="15px">
-                       
-                        <Button type="submit" color="secondary" variant="contained">
-                            Create New User
-                        </Button>
-                    </Box>
-                </form>
-            )}
-        </Formik>
-
+          <TextField
+            label="Category Name"
+            fullWidth
+            variant="filled"
+            name="name"
+            value={formData.name}
+            onChange={handleInputChange}
+          />
+          <br />
+          <TextField
+            label="Category Description"
+            fullWidth
+            variant="filled"
+            name="description"
+            value={formData.description}
+            onChange={handleInputChange}
+          />
+          <br />
+          <input
+                type="file"
+                accept="image/*"
+                multiple
+                // onChange={handleImageChange}
+                style={{ display: "none" }}
+                id="upload-image-input"
+              />
+              <label htmlFor="upload-image-input">
+                <Button
+                  fullWidth
+                  variant="contained"
+                  sx={{
+                    backgroundColor: "orange",
+                    "&:hover": { backgroundColor: "#F4D160" },
+                  }}
+                  component="span"
+                >
+                  Upload Image
+                </Button>
+              </label>
+        </DialogContent>
+        <DialogActions>
+          <Button
+            variant="contained"
+            color="primary"
+            onClick={handleClose}
+          >
+            Cancel
+          </Button>
+          <Button
+            variant="contained"
+            color="primary"
+            onClick={handleSubmit}
+          >
+            Submit
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Box>
-    );
+
+  );
 };
 
 export default Form;
