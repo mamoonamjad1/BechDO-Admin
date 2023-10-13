@@ -17,7 +17,7 @@ const LoginPaper = styled(Paper)(({ theme }) => ({
   display: "flex",
   flexDirection: "column",
   alignItems: "center",
-  backgroundColor: "rgba(255, 255, 255, 0.9)", // Opaque white background
+  backgroundColor: "rgba(255, 255, 255, 1)", // Opaque white background
   borderRadius: "8px",
   boxShadow: "0px 2px 4px rgba(0, 0, 0, 0.1)",
   padding: theme.spacing(4),
@@ -62,7 +62,7 @@ function LoginPage() {
   return (
     <Box
       sx={{
-        backgroundImage: `url(../../assets/auth-1.gif)`,
+        backgroundImage: `url(../../assets/auth-2.gif)`,
         backgroundSize: "100% 100%",
         backgroundPosition: "center",
         overflow: "hidden",
