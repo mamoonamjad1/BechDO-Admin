@@ -20,6 +20,7 @@
     "@nivo/geo": "^0.83.0",
     "@nivo/line": "^0.83.0",
     "@nivo/pie": "^0.83.0",
+    "@react-google-maps/api": "^2.19.2",
     "@react-spring/web": "^9.7.3",
     "@testing-library/jest-dom": "^5.16.5",
     "@testing-library/react": "^13.4.0",
