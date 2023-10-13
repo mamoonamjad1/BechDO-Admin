@@ -79,16 +79,6 @@ const Dashboard = () => {
           console.log(err)
       })
   })
-  const [bids, setBids] = useState([]);
-
-  useEffect(()=>{
-      axios.get("http://localhost:4000/admin/products/get/bids")
-      .then((res)=>{
-          setBids(res.data)
-      }).catch((err)=>{
-          console.log(err)
-      })
-  })
   useEffect(() => {
     axios.get("http://localhost:4000/admin/users/get/sellers")
     .then((res) => {    
