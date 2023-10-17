@@ -25,6 +25,7 @@ const Invoice = () => {
         const normalizedOrders = Object.keys(res.data).map((sellerId) => ({
           id: sellerId,
           ...res.data[sellerId],
+          payable: res.data[sellerId].totalEarnings * 0.99, // Calculate Payable (totalEarnings - 1%)
         }));
 
         setInvoice(normalizedOrders);
@@ -64,8 +65,14 @@ const Invoice = () => {
     },
     {
       field: "totalEarnings", // Use the totalEarnings field for the "TO PAY" column
-      headerName: "TO PAY",
+      headerName: "Wallet Balance",
       flex: 1,
+    },
+    {
+      field: "payable", // New field for Payable
+      headerName: "PAYABLE",
+      flex: 1,
+      valueGetter: (params) => params.row.totalEarnings * 0.99,
     },
   ];
 
