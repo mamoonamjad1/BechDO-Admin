@@ -26,7 +26,7 @@ const Team = () => {
       .catch((err) => {
         console.error("Error fetching users:", err);
       });
-  }, [users]);
+  }, []);
 
   const handleUserClick = (userId) => {
     console.log("Clicked user ID:", userId);

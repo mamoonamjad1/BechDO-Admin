@@ -131,14 +131,14 @@ const LiveAuction = () => {
               </Typography>
             </CardContent>
             <CardActions sx={{ justifyContent: "center" }}>
-              <Button
+              {/* <Button
                 size="small"
                 color="error"
                 variant="contained"
                 onClick={() => handleDeleteClick(product._id)}
               >
                 Stop Auction
-              </Button>
+              </Button> */}
             </CardActions>
           </Card>
         ))}
