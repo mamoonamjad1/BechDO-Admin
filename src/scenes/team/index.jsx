@@ -33,6 +33,7 @@ const Team = () => {
     axios.delete(`http://localhost:4000/admin/users/delete/${userId}`)
     .then((res) => {
         console.log("User deleted successfully:", res);
+        window.location.reload()
     }).catch((err) => {
         console.error("Error deleting user:", err);
     });     

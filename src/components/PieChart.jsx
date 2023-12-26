@@ -1,87 +1,84 @@
 import React, { useEffect, useState } from "react";
 import { ResponsivePie } from "@nivo/pie";
-import { tokens } from "../theme";
-import { useTheme } from "@mui/material";
 import axios from "axios";
 
 const PieChart = () => {
-  const theme = useTheme();
-  const colors = tokens(theme.palette.mode);
+  // State to store processed data for the pie chart
   const [orderData, setOrderData] = useState([]);
 
   useEffect(() => {
-    // Fetch order data from your API
+    // Fetch data from the server when the component mounts
     axios
       .get("http://localhost:4000/admin/products/chart")
       .then((res) => {
-        // Process the data to fit the structure expected by ResponsivePie
-        console.log("Chart",res);
-        const processedData = res.data.map((order, index) => ({
-          id: order.id, // Unique identifier for the data point
-          label: order.category.name, // Display label for the pie chart
-          value: order.currentPrice.$numberDecimal.toString(), // Numeric value for the data point
-          color: colors[index % colors.length], // Assign a color based on index
+        // Define distinct colors for each category
+        const distinctColors = ["#FF5733", "#33FF57", "#5733FF", "#FF33A1", "#33A1FF"];
+
+        // Count the number of products for each category
+        const categoryCounts = {};
+        res.data.forEach((order) => {
+          const category = order.category.name;
+          categoryCounts[category] = (categoryCounts[category] || 0) + 1;
+        });
+
+        // Create processed data with counts as values and assigned colors
+        const processedData = Object.entries(categoryCounts).map(([category, count], index) => ({
+          id: index.toString(), // Using index as id since id should be unique
+          label: category,
+          value: count,
+          color: distinctColors[index % distinctColors.length],
         }));
+
+        // Set the processed data to update the state
         setOrderData(processedData);
       })
       .catch((err) => {
         console.error("Error fetching order data: ", err);
       });
-  }, []);
+  }, []); // Empty dependency array means this effect runs once after the initial render
 
   return (
     <div style={{ height: "400px" }}>
+      {/* ResponsivePie component from @nivo/pie library */}
       <ResponsivePie
-        data={orderData}
-        theme={{
-          /* Customize the theme here */
-          axis: {
-            domain: {
-              line: {
-                stroke: colors.grey[100],
-              },
-            },
-            legend: {
-              text: {
-                fill: colors.grey[100],
-              },
-            },
-            ticks: {
-              line: {
-                stroke: colors.grey[100],
-                strokeWidth: 1,
-              },
-              text: {
-                fill: colors.grey[100],
-              },
-            },
-          },
-          legends: {
-            text: {
-              fill: colors.grey[100],
-            },
-          },
-        }}
+        data={orderData} // Pass the processed data to the pie chart
         margin={{ top: 40, right: 80, bottom: 80, left: 80 }}
         innerRadius={0.5}
         padAngle={0.7}
         cornerRadius={3}
         activeOuterRadiusOffset={8}
+        borderWidth={1}
         borderColor={{
           from: "color",
           modifiers: [["darker", 0.2]],
         }}
         arcLinkLabelsSkipAngle={10}
-        arcLinkLabelsTextColor={colors.grey[100]}
+        arcLinkLabelsTextColor="#333333"
         arcLinkLabelsThickness={2}
         arcLinkLabelsColor={{ from: "color" }}
-        enableArcLabels={false}
-        arcLabelsRadiusOffset={0.4}
-        arcLabelsSkipAngle={7}
+        arcLabelsSkipAngle={10}
         arcLabelsTextColor={{
           from: "color",
           modifiers: [["darker", 2]],
         }}
+        enableArcLabels={true} // Enable hover labels
+        arcLabel={(arc) => `${arc.label}`} // Customize label content
+        arcLabelTextColor={{ from: "color", modifiers: [["darker", 2]] }} // Customize label text color
+        arcLabelComponent={({ datum, label }) => (
+          // Customize label rendering on hover
+          <g transform={`translate(${datum.x + 8},${datum.y - 8})`}>
+            <text
+              dominantBaseline="middle"
+              textAnchor="start"
+              style={{
+                fill: datum.color,
+                fontSize: 12,
+              }}
+            >
+              {label}
+            </text>
+          </g>
+        )}
         defs={[
           {
             id: "dots",
@@ -123,6 +120,7 @@ const PieChart = () => {
                 style: {
                   itemTextColor: "#000",
                 },
+                
               },
             ],
           },
